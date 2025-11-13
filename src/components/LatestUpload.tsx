@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { useTasks } from "@/hooks/useTasks";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -12,14 +13,30 @@ interface LatestUploadProps {
 }
 
 export const LatestUpload = ({ onShowHistory }: LatestUploadProps) => {
-  const { data, loading } = useTasks({
+  // Initial fetch without auto-refresh
+  const { data, loading, refetch } = useTasks({
     page: 1,
     limit: 1,
-    autoRefresh: true,
-    refreshInterval: 15000, // 15 seconds
+    autoRefresh: false, // Start without auto-refresh
   });
 
   const latestTask = data?.items?.[0];
+  
+  // Determine if we should poll based on task status
+  const shouldPoll = latestTask && 
+    (latestTask.status === "processing" ||  
+     latestTask.status === "pending");
+
+  // Conditionally poll when task is active
+  useEffect(() => {
+    if (!shouldPoll) return;
+
+    const interval = setInterval(() => {
+      refetch();
+    }, 3000); // 3 seconds for active tasks
+
+    return () => clearInterval(interval);
+  }, [shouldPoll, refetch]);
 
   if (loading && !latestTask) {
     return null;

@@ -98,6 +98,12 @@ export const ProductsPage = () => {
     setBulkDeleteTaskId(null);
   };
 
+  const handleBulkDeleteDialogClose = (open: boolean) => {
+    setShowBulkDeleteProgress(open);
+    // Don't reset taskId here - let it be reset only when a new operation starts
+    // This prevents unnecessary rerenders when closing the dialog
+  };
+
   const products = data?.items || [];
   const totalProducts = data?.total || 0;
 
@@ -287,7 +293,7 @@ export const ProductsPage = () => {
 
       <TaskProgressDialog
         open={showBulkDeleteProgress}
-        onOpenChange={setShowBulkDeleteProgress}
+        onOpenChange={handleBulkDeleteDialogClose}
         taskId={bulkDeleteTaskId}
         title="Bulk Delete Progress"
         description="Deleting all products. This may take a few moments."

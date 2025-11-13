@@ -2,12 +2,19 @@ import { useState, useEffect } from "react";
 import { axiosClient, ApiResponse } from "@/api/axiosClient";
 import { TaskStatus } from "@/types";
 
-export const useTaskStatus = (taskId: string | null) => {
+export const useTaskStatus = (taskId: string | null, enabled: boolean = true) => {
   const [status, setStatus] = useState<TaskStatus | null>(null);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    if (!taskId) return;
+    if (!taskId || !enabled) {
+      // Reset status when disabled or no taskId
+      if (!enabled) {
+        setStatus(null);
+        setLoading(false);
+      }
+      return;
+    }
 
     const interval = setInterval(async () => {
       try {
@@ -29,7 +36,7 @@ export const useTaskStatus = (taskId: string | null) => {
     }, 2000);
 
     return () => clearInterval(interval);
-  }, [taskId]);
+  }, [taskId, enabled]);
 
   return { status, loading };
 };

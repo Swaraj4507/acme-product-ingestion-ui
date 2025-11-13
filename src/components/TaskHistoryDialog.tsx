@@ -23,11 +23,13 @@ export const TaskHistoryDialog = ({ open, onOpenChange }: TaskHistoryDialogProps
   const [page, setPage] = useState(1);
   const limit = 20;
 
+  // Only fetch when dialog is open
   const { data, loading, error, refetch } = useTasks({
     page,
     limit,
     autoRefresh: open, // Only auto-refresh when dialog is open
     refreshInterval: 15000,
+    enabled: open, // Only fetch when dialog is open
   });
 
   const getStatusIcon = (status: Task["status"]) => {

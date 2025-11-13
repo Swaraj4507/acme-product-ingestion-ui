@@ -8,6 +8,7 @@ interface UseTasksParams {
   status?: string;
   autoRefresh?: boolean;
   refreshInterval?: number;
+  enabled?: boolean; // Only fetch when enabled is true
 }
 
 export const useTasks = (params: UseTasksParams = {}) => {
@@ -16,7 +17,8 @@ export const useTasks = (params: UseTasksParams = {}) => {
     limit = 20, 
     status,
     autoRefresh = false,
-    refreshInterval = 15000 // 15 seconds default
+    refreshInterval = 15000, // 15 seconds default
+    enabled = true // Default to true for backward compatibility
   } = params;
   
   const [data, setData] = useState<PaginatedTasks | null>(null);
@@ -24,6 +26,8 @@ export const useTasks = (params: UseTasksParams = {}) => {
   const [error, setError] = useState<string | null>(null);
 
   const fetchTasks = useCallback(async () => {
+    if (!enabled) return;
+    
     setLoading(true);
     setError(null);
     
@@ -55,11 +59,15 @@ export const useTasks = (params: UseTasksParams = {}) => {
     } finally {
       setLoading(false);
     }
-  }, [page, limit, status]);
+  }, [page, limit, status, enabled]);
 
   useEffect(() => {
-    fetchTasks();
-  }, [fetchTasks]);
+    if (enabled) {
+      fetchTasks();
+    } else {
+      setLoading(false);
+    }
+  }, [fetchTasks, enabled]);
 
   // Auto-refresh functionality
   useEffect(() => {

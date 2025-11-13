@@ -40,7 +40,8 @@ export const TaskProgressDialog = ({
   failedMessage,
   onComplete,
 }: TaskProgressDialogProps) => {
-  const { status, loading } = useTaskStatus(taskId);
+  // Only poll when dialog is open
+  const { status, loading } = useTaskStatus(taskId, open);
 
   const getStatusIcon = () => {
     if (!status) return <Loader2 className="h-8 w-8 animate-spin text-blue-500" />;
@@ -77,8 +78,10 @@ export const TaskProgressDialog = ({
   const isComplete = status?.status === "completed" || status?.status === "failed";
   const isInProgress = status?.status === "processing" || status?.status === "in_progress";
 
-  // Auto-close on completion and call onComplete
+  // Auto-close on completion and call onComplete (only when dialog is open)
   useEffect(() => {
+    if (!open) return; // Don't auto-close if dialog is already closed
+    
     if (isComplete && status?.status === "completed" && onComplete) {
       const timer = setTimeout(() => {
         onComplete();
@@ -86,7 +89,7 @@ export const TaskProgressDialog = ({
       }, 2000); // Wait 2 seconds before closing
       return () => clearTimeout(timer);
     }
-  }, [isComplete, status?.status, onComplete, onOpenChange]);
+  }, [open, isComplete, status?.status, onComplete, onOpenChange]);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
