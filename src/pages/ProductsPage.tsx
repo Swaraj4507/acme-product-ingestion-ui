@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useProducts } from "@/hooks/useProducts";
 import { ProductTable } from "@/components/ProductTable";
 import { ProductFormModal } from "@/components/ProductFormModal";
+import { TaskProgressDialog } from "@/components/TaskProgressDialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -35,7 +36,8 @@ export const ProductsPage = () => {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [deleteProduct, setDeleteProduct] = useState<Product | null>(null);
   const [showBulkDeleteDialog, setShowBulkDeleteDialog] = useState(false);
-  const [isBulkDeleting, setIsBulkDeleting] = useState(false);
+  const [showBulkDeleteProgress, setShowBulkDeleteProgress] = useState(false);
+  const [bulkDeleteTaskId, setBulkDeleteTaskId] = useState<string | null>(null);
 
   const { data, loading, error, refetch } = useProducts({
     page,
@@ -79,44 +81,21 @@ export const ProductsPage = () => {
 
   const handleBulkDelete = async () => {
     try {
-      setIsBulkDeleting(true);
       const { data } = await axiosClient.post<ApiResponse<{ task_id: string }>>(
         "/products/bulk-delete?confirm=true"
       );
 
-      // Poll for task completion
-      const pollTask = async (taskId: string) => {
-        const interval = setInterval(async () => {
-          try {
-            const { data: taskData } = await axiosClient.get<ApiResponse<{
-              status: string;
-              progress: number;
-            }>>(`/tasks/${taskId}`);
-
-            if (["completed", "failed"].includes(taskData.results.status)) {
-              clearInterval(interval);
-              setIsBulkDeleting(false);
-              if (taskData.results.status === "completed") {
-                toast.success("All products deleted successfully");
-                refetch();
-              } else {
-                toast.error("Bulk delete failed");
-              }
-            }
-          } catch (error) {
-            clearInterval(interval);
-            setIsBulkDeleting(false);
-            toast.error("Failed to check delete status");
-          }
-        }, 2000);
-      };
-
-      pollTask(data.results.task_id);
+      setBulkDeleteTaskId(data.results.task_id);
       setShowBulkDeleteDialog(false);
+      setShowBulkDeleteProgress(true);
     } catch (error: any) {
-      setIsBulkDeleting(false);
-      toast.error(error.response?.data?.message || "Failed to delete products");
+      toast.error(error.response?.data?.message || "Failed to start bulk delete");
     }
+  };
+
+  const handleBulkDeleteComplete = () => {
+    toast.success("All products deleted successfully");
+    setBulkDeleteTaskId(null);
   };
 
   const products = data?.items || [];
@@ -140,7 +119,7 @@ export const ProductsPage = () => {
           <Button
             variant="destructive"
             onClick={() => setShowBulkDeleteDialog(true)}
-            disabled={isBulkDeleting}
+            disabled={showBulkDeleteProgress}
             className="flex-1 sm:flex-initial"
           >
             <Trash2 className="mr-2 h-4 w-4" />
@@ -294,17 +273,32 @@ export const ProductsPage = () => {
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={isBulkDeleting}>Cancel</AlertDialogCancel>
+            <AlertDialogCancel disabled={showBulkDeleteProgress}>Cancel</AlertDialogCancel>
             <AlertDialogAction
               onClick={handleBulkDelete}
-              disabled={isBulkDeleting}
+              disabled={showBulkDeleteProgress}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
-              {isBulkDeleting ? "Deleting..." : "Delete All"}
+              Delete All
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <TaskProgressDialog
+        open={showBulkDeleteProgress}
+        onOpenChange={setShowBulkDeleteProgress}
+        taskId={bulkDeleteTaskId}
+        title="Bulk Delete Progress"
+        description="Deleting all products. This may take a few moments."
+        icon={Trash2}
+        recordLabel="products"
+        startingMessage="Starting bulk delete..."
+        processingMessage="Deleting products..."
+        completedMessage="Bulk delete completed successfully"
+        failedMessage="Bulk delete failed"
+        onComplete={handleBulkDeleteComplete}
+      />
     </div>
   );
 };
