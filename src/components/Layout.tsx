@@ -15,13 +15,19 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
 
   return (
     <div className="min-h-screen bg-background">
-      <nav className="border-b">
-        <div className="container mx-auto px-4">
+      <nav className="border-b bg-card">
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex h-16 items-center justify-between">
-            <div className="flex items-center gap-2">
-              <h1 className="text-xl font-bold">ACME Product Ingestion</h1>
-            </div>
-            <div className="flex gap-2">
+            <Link to="/" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
+              <div className="flex items-center gap-2">
+                <Package className="h-6 w-6 sm:h-7 sm:w-7 text-primary" />
+                <h1 className="text-lg sm:text-xl font-bold tracking-tight">
+                  <span className="hidden sm:inline">ACME Product Ingestion</span>
+                  <span className="sm:hidden">ACME</span>
+                </h1>
+              </div>
+            </Link>
+            <div className="flex gap-1 sm:gap-2">
               {navItems.map((item) => {
                 const Icon = item.icon;
                 const isActive = location.pathname === item.path;
@@ -29,10 +35,14 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
                   <Link key={item.path} to={item.path}>
                     <Button
                       variant={isActive ? "default" : "ghost"}
-                      className={cn(isActive && "bg-primary text-primary-foreground")}
+                      size="sm"
+                      className={cn(
+                        "h-9 px-2 sm:px-4",
+                        isActive && "bg-primary text-primary-foreground shadow-sm"
+                      )}
                     >
-                      <Icon className="mr-2 h-4 w-4" />
-                      {item.label}
+                      <Icon className="h-4 w-4 sm:mr-2" />
+                      <span className="hidden sm:inline">{item.label}</span>
                     </Button>
                   </Link>
                 );
@@ -41,7 +51,7 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
           </div>
         </div>
       </nav>
-      <main>{children}</main>
+      <main className="min-h-[calc(100vh-4rem)]">{children}</main>
     </div>
   );
 };
