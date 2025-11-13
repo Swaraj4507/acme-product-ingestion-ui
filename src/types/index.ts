@@ -48,10 +48,11 @@ export interface WebhookEvent {
 }
 
 export interface WebhookTestResult {
+  success: boolean;
   status_code: number;
-  response_time: number;
-  response_body?: string;
-  error?: string;
+  response_time_ms: number;
+  error: string | null;
+  timestamp: string;
 }
 
 export interface TaskStatus {

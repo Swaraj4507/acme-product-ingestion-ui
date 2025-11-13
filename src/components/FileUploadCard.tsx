@@ -70,8 +70,20 @@ export const FileUploadCard = () => {
   };
 
   const handleUploadComplete = () => {
-    setTaskId(null);
-    setShowProgressDialog(false);
+    // Don't reset taskId here - we need it to check on close
+  };
+
+  const handleDialogClose = (open: boolean) => {
+    setShowProgressDialog(open);
+    
+    // If dialog is being closed and we had a task running, trigger refresh
+    // This ensures the latest upload card is updated after upload completes
+    if (!open && taskId) {
+      // Reset taskId when dialog closes
+      setTaskId(null);
+      // Trigger a custom event that LatestUpload can listen to
+      window.dispatchEvent(new CustomEvent('uploadTaskCompleted'));
+    }
   };
 
   return (
@@ -115,7 +127,7 @@ export const FileUploadCard = () => {
 
       <TaskProgressDialog
         open={showProgressDialog}
-        onOpenChange={setShowProgressDialog}
+        onOpenChange={handleDialogClose}
         taskId={taskId}
         title="File Upload Progress"
         description="Processing your CSV file. This may take a few moments."

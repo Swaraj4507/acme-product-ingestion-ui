@@ -21,7 +21,7 @@ export const WebhookTestDialog = ({
   result,
   loading,
 }: WebhookTestDialogProps) => {
-  const isSuccess = result && result.status_code >= 200 && result.status_code < 300;
+  const isSuccess = result?.success ?? false;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -43,19 +43,21 @@ export const WebhookTestDialog = ({
                 <XCircle className="h-5 w-5 text-red-500" />
               )}
               <span className="font-medium">
-                Status: {result.status_code} {isSuccess ? "Success" : "Failed"}
+                {isSuccess ? "Test Successful" : "Test Failed"}
               </span>
             </div>
             <div>
-              <p className="text-sm text-muted-foreground">Response Time</p>
-              <p className="font-mono">{result.response_time}ms</p>
+              <p className="text-sm text-muted-foreground">Status Code</p>
+              <p className="font-mono text-sm">{result.status_code}</p>
             </div>
-            {result.response_body && (
+            <div>
+              <p className="text-sm text-muted-foreground">Response Time</p>
+              <p className="font-mono text-sm">{result.response_time_ms.toFixed(2)}ms</p>
+            </div>
+            {result.timestamp && (
               <div>
-                <p className="text-sm text-muted-foreground mb-2">Response Body</p>
-                <pre className="bg-muted p-3 rounded-md text-xs overflow-auto max-h-40">
-                  {result.response_body}
-                </pre>
+                <p className="text-sm text-muted-foreground">Timestamp</p>
+                <p className="font-mono text-xs">{new Date(result.timestamp).toLocaleString()}</p>
               </div>
             )}
             {result.error && (

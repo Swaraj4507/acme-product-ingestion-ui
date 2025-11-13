@@ -113,9 +113,11 @@ export const WebhooksPage = () => {
       setTestResult(data.results);
     } catch (error: any) {
       setTestResult({
+        success: false,
         status_code: error.response?.status || 0,
-        response_time: 0,
+        response_time_ms: 0,
         error: error.response?.data?.message || "Failed to test webhook",
+        timestamp: new Date().toISOString(),
       });
     } finally {
       setIsTestLoading(false);

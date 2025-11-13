@@ -39,6 +39,21 @@ export const LatestUpload = ({ onShowHistory }: LatestUploadProps) => {
     return () => clearInterval(interval);
   }, [shouldPoll, refetch]);
 
+  // Listen for upload task completion events to refresh
+  useEffect(() => {
+    const handleUploadComplete = () => {
+      // Small delay to ensure task status is updated on server
+      setTimeout(() => {
+        refetch();
+      }, 500);
+    };
+
+    window.addEventListener('uploadTaskCompleted', handleUploadComplete);
+    return () => {
+      window.removeEventListener('uploadTaskCompleted', handleUploadComplete);
+    };
+  }, [refetch]);
+
   if (loading && !latestTask) {
     return null;
   }
