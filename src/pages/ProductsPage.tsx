@@ -38,6 +38,10 @@ export const ProductsPage = () => {
   const [showBulkDeleteDialog, setShowBulkDeleteDialog] = useState(false);
   const [showBulkDeleteProgress, setShowBulkDeleteProgress] = useState(false);
   const [bulkDeleteTaskId, setBulkDeleteTaskId] = useState<string | null>(null);
+  const [showOverrideDialog, setShowOverrideDialog] = useState(false);
+  const [conflictingSku, setConflictingSku] = useState<string | null>(null);
+  const [pendingProductData, setPendingProductData] = useState<Omit<Product, "id" | "createdAt" | "updatedAt"> | null>(null);
+  const [isUpdateMode, setIsUpdateMode] = useState(false);
 
   const { data, loading, error, refetch } = useProducts({
     page,
@@ -46,27 +50,79 @@ export const ProductsPage = () => {
     active: activeFilter,
   });
 
-  const handleCreate = async (productData: Omit<Product, "id" | "createdAt" | "updatedAt">) => {
+  const handleCreate = async (productData: Omit<Product, "id" | "createdAt" | "updatedAt">, override = false) => {
     try {
-      await axiosClient.post<ApiResponse<Product>>("/products", productData);
+      const url = override ? `/products?override=true` : "/products";
+      await axiosClient.post<ApiResponse<Product>>(url, productData);
       toast.success("Product created successfully");
       refetch();
+      setPendingProductData(null);
+      setConflictingSku(null);
     } catch (error: any) {
+      // Check for 409 Conflict (SKU already exists)
+      if (error.response?.status === 409) {
+        const errorMessage = error.response?.data?.message || "";
+        // Extract SKU from error message: "Product with SKU 'XXX' already exists."
+        const skuMatch = errorMessage.match(/SKU '([^']+)'/);
+        const sku = skuMatch ? skuMatch[1] : productData.sku;
+        
+        setConflictingSku(sku);
+        setPendingProductData(productData);
+        setIsUpdateMode(false);
+        setShowOverrideDialog(true);
+        return; // Don't throw, we're showing a dialog
+      }
       toast.error(error.response?.data?.message || "Failed to create product");
       throw error;
     }
   };
 
-  const handleUpdate = async (productData: Omit<Product, "id" | "createdAt" | "updatedAt">) => {
+  const handleUpdate = async (productData: Omit<Product, "id" | "createdAt" | "updatedAt">, override = false) => {
     if (!editingProduct) return;
     try {
-      await axiosClient.put<ApiResponse<Product>>(`/products/${editingProduct.id}`, productData);
+      const url = override 
+        ? `/products/${editingProduct.id}?override=true` 
+        : `/products/${editingProduct.id}`;
+      await axiosClient.put<ApiResponse<Product>>(url, productData);
       toast.success("Product updated successfully");
       refetch();
+      setPendingProductData(null);
+      setConflictingSku(null);
     } catch (error: any) {
+      // Check for 409 Conflict (SKU already exists)
+      if (error.response?.status === 409) {
+        const errorMessage = error.response?.data?.message || "";
+        // Extract SKU from error message: "Product with SKU 'XXX' already exists."
+        const skuMatch = errorMessage.match(/SKU '([^']+)'/);
+        const sku = skuMatch ? skuMatch[1] : productData.sku;
+        
+        setConflictingSku(sku);
+        setPendingProductData(productData);
+        setIsUpdateMode(true);
+        setShowOverrideDialog(true);
+        return; // Don't throw, we're showing a dialog
+      }
       toast.error(error.response?.data?.message || "Failed to update product");
       throw error;
     }
+  };
+
+  const handleOverrideConfirm = async () => {
+    if (!pendingProductData) return;
+    
+    setShowOverrideDialog(false);
+    
+    if (isUpdateMode && editingProduct) {
+      await handleUpdate(pendingProductData, true);
+    } else {
+      await handleCreate(pendingProductData, true);
+    }
+  };
+
+  const handleOverrideCancel = () => {
+    setShowOverrideDialog(false);
+    setPendingProductData(null);
+    setConflictingSku(null);
   };
 
   const handleDelete = async (product: Product) => {
@@ -286,6 +342,32 @@ export const ProductsPage = () => {
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
               Delete All
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog open={showOverrideDialog} onOpenChange={(open) => {
+        if (!open) {
+          handleOverrideCancel();
+        } else {
+          setShowOverrideDialog(open);
+        }
+      }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>SKU Already Exists</AlertDialogTitle>
+            <AlertDialogDescription>
+              A product with SKU <strong>"{conflictingSku}"</strong> already exists. Do you want to override it?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={handleOverrideCancel}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleOverrideConfirm}
+              className="bg-primary text-primary-foreground hover:bg-primary/90"
+            >
+              Override
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
