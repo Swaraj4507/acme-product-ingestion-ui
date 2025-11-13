@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import {
   Dialog,
@@ -12,6 +12,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Select,
   SelectContent,
@@ -20,6 +21,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Webhook, WebhookEvent } from "@/types";
+import { axiosClient, ApiResponse } from "@/api/axiosClient";
+import { Loader2 } from "lucide-react";
 
 interface WebhookFormModalProps {
   open: boolean;
@@ -47,6 +50,33 @@ export const WebhookFormModal = ({
 
   const isActive = watch("is_active");
   const eventType = watch("event_type");
+  const [payload, setPayload] = useState<any>(null);
+  const [payloadLoading, setPayloadLoading] = useState(false);
+  const [payloadError, setPayloadError] = useState<string | null>(null);
+
+  // Fetch payload when event type changes
+  useEffect(() => {
+    if (eventType && open) {
+      setPayloadLoading(true);
+      setPayloadError(null);
+      axiosClient
+        .get<ApiResponse<Record<string, any>>>(`/webhooks/payloads?event_type=${eventType}`)
+        .then((res) => {
+          // Extract the payload for the selected event type
+          const eventPayload = res.data.results[eventType];
+          setPayload(eventPayload || null);
+          setPayloadLoading(false);
+        })
+        .catch((err) => {
+          setPayloadError(err.response?.data?.message || "Failed to fetch payload");
+          setPayloadLoading(false);
+          setPayload(null);
+        });
+    } else {
+      setPayload(null);
+      setPayloadError(null);
+    }
+  }, [eventType, open]);
 
   useEffect(() => {
     if (webhook) {
@@ -114,7 +144,7 @@ export const WebhookFormModal = ({
           </div>
           <div className="space-y-2">
             <Label htmlFor="event_type">Event Type *</Label>
-            <Select value={eventType} onValueChange={(value) => setValue("event_type", value)}>
+            <Select value={eventType} onValueChange={(value: string) => setValue("event_type", value)}>
               <SelectTrigger>
                 <SelectValue placeholder="Select an event type" />
               </SelectTrigger>
@@ -135,10 +165,40 @@ export const WebhookFormModal = ({
             <Switch
               id="is_active"
               checked={isActive}
-              onCheckedChange={(checked) => setValue("is_active", checked)}
+              onCheckedChange={(checked: boolean) => setValue("is_active", checked)}
             />
             <Label htmlFor="is_active">Active</Label>
           </div>
+
+          {eventType && (
+            <Card className="mt-4">
+              <CardHeader>
+                <CardTitle className="text-sm">Example Payload</CardTitle>
+                <CardDescription className="text-xs">
+                  This is the payload that will be sent to your webhook URL
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                {payloadLoading ? (
+                  <div className="flex items-center justify-center py-4">
+                    <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+                    <span className="ml-2 text-sm text-muted-foreground">Loading payload...</span>
+                  </div>
+                ) : payloadError ? (
+                  <div className="text-sm text-destructive py-2">{payloadError}</div>
+                ) : payload ? (
+                  <pre className="bg-muted p-3 rounded-md text-xs overflow-x-auto max-h-64 overflow-y-auto">
+                    {JSON.stringify(payload, null, 2)}
+                  </pre>
+                ) : (
+                  <div className="text-sm text-muted-foreground py-2">
+                    No payload available for this event type
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          )}
+
           <DialogFooter>
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
               Cancel
