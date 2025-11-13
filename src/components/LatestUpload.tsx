@@ -17,6 +17,7 @@ export const LatestUpload = ({ onShowHistory }: LatestUploadProps) => {
   const { data, loading, refetch } = useTasks({
     page: 1,
     limit: 1,
+    task_type: "product_ingestion", // Only show product ingestion tasks
     autoRefresh: false, // Start without auto-refresh
   });
 

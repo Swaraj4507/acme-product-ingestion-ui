@@ -6,6 +6,7 @@ interface UseTasksParams {
   page?: number;
   limit?: number;
   status?: string;
+  task_type?: string; // Filter by task type: bulk_delete, product_ingestion
   autoRefresh?: boolean;
   refreshInterval?: number;
   enabled?: boolean; // Only fetch when enabled is true
@@ -16,6 +17,7 @@ export const useTasks = (params: UseTasksParams = {}) => {
     page = 1, 
     limit = 20, 
     status,
+    task_type,
     autoRefresh = false,
     refreshInterval = 15000, // 15 seconds default
     enabled = true // Default to true for backward compatibility
@@ -31,7 +33,7 @@ export const useTasks = (params: UseTasksParams = {}) => {
     if (!enabled) return;
 
     // Create a key from params to detect actual changes
-    const paramsKey = `${page}-${limit}-${status || ''}-${enabled}`;
+    const paramsKey = `${page}-${limit}-${status || ''}-${task_type || ''}-${enabled}`;
     
     // Prevent duplicate calls during StrictMode double render
     if (isFetchingRef.current && lastParamsRef.current === paramsKey) {
@@ -49,6 +51,7 @@ export const useTasks = (params: UseTasksParams = {}) => {
     });
     
     if (status) queryParams.append("status", status);
+    if (task_type) queryParams.append("task_type", task_type);
 
     try {
       const res = await axiosClient.get<ApiResponse<ApiPaginatedTasks>>(
@@ -72,7 +75,7 @@ export const useTasks = (params: UseTasksParams = {}) => {
       setLoading(false);
       isFetchingRef.current = false;
     }
-  }, [page, limit, status, enabled]);
+  }, [page, limit, status, task_type, enabled]);
 
   useEffect(() => {
     if (enabled) {

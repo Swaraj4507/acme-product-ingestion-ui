@@ -10,6 +10,14 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Label } from "@/components/ui/label";
 import { Task } from "@/types";
 import { History, RefreshCw, CheckCircle2, XCircle, Clock, Loader2 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
@@ -21,16 +29,24 @@ interface TaskHistoryDialogProps {
 
 export const TaskHistoryDialog = ({ open, onOpenChange }: TaskHistoryDialogProps) => {
   const [page, setPage] = useState(1);
+  const [taskType, setTaskType] = useState<string>("all");
   const limit = 20;
 
   // Only fetch when dialog is open
   const { data, loading, error, refetch } = useTasks({
     page,
     limit,
+    task_type: taskType === "all" ? undefined : taskType,
     autoRefresh: open, // Only auto-refresh when dialog is open
     refreshInterval: 15000,
     enabled: open, // Only fetch when dialog is open
   });
+
+  // Reset to page 1 when task type changes
+  const handleTaskTypeChange = (value: string) => {
+    setTaskType(value);
+    setPage(1);
+  };
 
   const getStatusIcon = (status: Task["status"]) => {
     switch (status) {
@@ -92,6 +108,22 @@ export const TaskHistoryDialog = ({ open, onOpenChange }: TaskHistoryDialogProps
             </Button>
           </div>
         </DialogHeader>
+
+        <div className="flex items-center gap-4 pb-4 border-b">
+          <Label htmlFor="task-type" className="text-sm font-medium whitespace-nowrap">
+            Task Type:
+          </Label>
+          <Select value={taskType} onValueChange={handleTaskTypeChange}>
+            <SelectTrigger id="task-type" className="w-[200px]">
+              <SelectValue placeholder="Select task type" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Tasks</SelectItem>
+              <SelectItem value="product_ingestion">Product Ingestion</SelectItem>
+              <SelectItem value="bulk_delete">Bulk Delete</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
 
         <div className="flex-1 overflow-y-auto space-y-4 pr-2">
           {loading && !data && (
