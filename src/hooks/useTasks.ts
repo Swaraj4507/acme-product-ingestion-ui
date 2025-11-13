@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { axiosClient, ApiResponse } from "@/api/axiosClient";
 import { PaginatedTasks, ApiPaginatedTasks } from "@/types";
 
@@ -24,10 +24,22 @@ export const useTasks = (params: UseTasksParams = {}) => {
   const [data, setData] = useState<PaginatedTasks | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const isFetchingRef = useRef(false);
+  const lastParamsRef = useRef<string>("");
 
   const fetchTasks = useCallback(async () => {
     if (!enabled) return;
+
+    // Create a key from params to detect actual changes
+    const paramsKey = `${page}-${limit}-${status || ''}-${enabled}`;
     
+    // Prevent duplicate calls during StrictMode double render
+    if (isFetchingRef.current && lastParamsRef.current === paramsKey) {
+      return;
+    }
+
+    isFetchingRef.current = true;
+    lastParamsRef.current = paramsKey;
     setLoading(true);
     setError(null);
     
@@ -58,6 +70,7 @@ export const useTasks = (params: UseTasksParams = {}) => {
       setError(err.response?.data?.message || "Failed to fetch tasks");
     } finally {
       setLoading(false);
+      isFetchingRef.current = false;
     }
   }, [page, limit, status, enabled]);
 

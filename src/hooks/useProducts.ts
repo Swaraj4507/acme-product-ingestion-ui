@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { axiosClient, ApiResponse } from "@/api/axiosClient";
 import { PaginatedProducts, ApiPaginatedProducts } from "@/types";
 
@@ -14,8 +14,16 @@ export const useProducts = (params: UseProductsParams = {}) => {
   const [data, setData] = useState<PaginatedProducts | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const hasFetchedRef = useRef(false);
+  const isFetchingRef = useRef(false);
 
   const fetchProducts = useCallback(async () => {
+    // Prevent duplicate calls during StrictMode double render
+    if (isFetchingRef.current) {
+      return;
+    }
+
+    isFetchingRef.current = true;
     setLoading(true);
     setError(null);
     
@@ -44,11 +52,13 @@ export const useProducts = (params: UseProductsParams = {}) => {
         limit: responseData.limit,
         totalPages: totalPages,
       });
+      hasFetchedRef.current = true;
     } catch (err: any) {
       console.error("Products API Error:", err);
       setError(err.response?.data?.message || "Failed to fetch products");
     } finally {
       setLoading(false);
+      isFetchingRef.current = false;
     }
   }, [page, limit, search, active]);
 

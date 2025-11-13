@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { axiosClient, ApiResponse } from "@/api/axiosClient";
 import { Webhook, WebhookEvent } from "@/types";
 
@@ -6,8 +6,15 @@ export const useWebhooks = () => {
   const [data, setData] = useState<Webhook[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const isFetchingRef = useRef(false);
 
   useEffect(() => {
+    // Prevent duplicate calls during StrictMode double render
+    if (isFetchingRef.current) {
+      return;
+    }
+
+    isFetchingRef.current = true;
     setLoading(true);
     setError(null);
 
@@ -21,10 +28,12 @@ export const useWebhooks = () => {
         }));
         setData(webhooks);
         setLoading(false);
+        isFetchingRef.current = false;
       })
       .catch((err) => {
         setError(err.response?.data?.message || "Failed to fetch webhooks");
         setLoading(false);
+        isFetchingRef.current = false;
       });
   }, []);
 
@@ -54,8 +63,15 @@ export const useWebhookEvents = () => {
   const [data, setData] = useState<WebhookEvent[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const isFetchingRef = useRef(false);
 
   useEffect(() => {
+    // Prevent duplicate calls during StrictMode double render
+    if (isFetchingRef.current) {
+      return;
+    }
+
+    isFetchingRef.current = true;
     setLoading(true);
     setError(null);
 
@@ -64,10 +80,12 @@ export const useWebhookEvents = () => {
       .then((res) => {
         setData(res.data.results);
         setLoading(false);
+        isFetchingRef.current = false;
       })
       .catch((err) => {
         setError(err.response?.data?.message || "Failed to fetch webhook events");
         setLoading(false);
+        isFetchingRef.current = false;
       });
   }, []);
 
