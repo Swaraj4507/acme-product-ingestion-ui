@@ -100,7 +100,7 @@ export const TaskHistoryDialog = ({ open, onOpenChange }: TaskHistoryDialogProps
                 Task History
               </DialogTitle>
               <DialogDescription className="mt-1">
-                All uploads and bulk operations (auto-refreshes every 15s)
+                All uploads and bulk operations
               </DialogDescription>
             </div>
             <Button variant="ghost" size="icon" onClick={refetch} disabled={loading}>

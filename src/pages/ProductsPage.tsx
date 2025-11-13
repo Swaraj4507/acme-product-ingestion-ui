@@ -38,6 +38,7 @@ export const ProductsPage = () => {
   const [showBulkDeleteDialog, setShowBulkDeleteDialog] = useState(false);
   const [showBulkDeleteProgress, setShowBulkDeleteProgress] = useState(false);
   const [bulkDeleteTaskId, setBulkDeleteTaskId] = useState<string | null>(null);
+  const [taskCompleted, setTaskCompleted] = useState(false);
   const [showOverrideDialog, setShowOverrideDialog] = useState(false);
   const [conflictingSku, setConflictingSku] = useState<string | null>(null);
   const [pendingProductData, setPendingProductData] = useState<Omit<Product, "id" | "createdAt" | "updatedAt"> | null>(null);
@@ -142,6 +143,7 @@ export const ProductsPage = () => {
       );
 
       setBulkDeleteTaskId(data.results.task_id);
+      setTaskCompleted(false); // Reset completion state for new task
       setShowBulkDeleteDialog(false);
       setShowBulkDeleteProgress(true);
     } catch (error: any) {
@@ -151,11 +153,19 @@ export const ProductsPage = () => {
 
   const handleBulkDeleteComplete = () => {
     toast.success("All products deleted successfully");
+    setTaskCompleted(true);
     setBulkDeleteTaskId(null);
   };
 
   const handleBulkDeleteDialogClose = (open: boolean) => {
     setShowBulkDeleteProgress(open);
+    
+    // If dialog is being closed and task was completed, refresh the product list
+    if (!open && taskCompleted) {
+      refetch();
+      setTaskCompleted(false);
+    }
+    
     // Don't reset taskId here - let it be reset only when a new operation starts
     // This prevents unnecessary rerenders when closing the dialog
   };

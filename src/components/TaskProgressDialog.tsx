@@ -117,18 +117,31 @@ export const TaskProgressDialog = ({
                 <span className="font-medium">{status.progress.toFixed(1)}%</span>
               </div>
               <Progress value={status.progress} />
+              <p className="text-xs text-center text-muted-foreground mt-2">
+                You can close this dialog and continue working. The operation will continue in the background.
+              </p>
             </div>
           )}
 
           {status?.status === "completed" && (
-            <div className="text-center text-sm text-green-600 dark:text-green-400">
-              ✓ Successfully processed {status.processed_records.toLocaleString()} {recordLabel}
+            <div className="space-y-2">
+              <div className="text-center text-sm text-green-600 dark:text-green-400">
+                ✓ Successfully processed {status.processed_records.toLocaleString()} {recordLabel}
+              </div>
+              <p className="text-xs text-center text-muted-foreground">
+                You can close this dialog. The operation has completed successfully.
+              </p>
             </div>
           )}
 
           {status?.status === "failed" && (
-            <div className="text-center text-sm text-red-600 dark:text-red-400">
-              ✗ Operation failed. Please try again.
+            <div className="space-y-2">
+              <div className="text-center text-sm text-red-600 dark:text-red-400">
+                ✗ Operation failed. Please try again.
+              </div>
+              <p className="text-xs text-center text-muted-foreground">
+                You can close this dialog and try again.
+              </p>
             </div>
           )}
 
