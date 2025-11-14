@@ -1,3 +1,41 @@
+# Acme Product Ingestion UI
+
+A React + Vite + TypeScript application for importing, managing, and reviewing product data. It implements:
+
+- CSV upload with progress tracking up to 500k records
+- Task history with filtering/pagination and latest task card
+- Full CRUD product management (search, filters, pagination, bulk delete)
+- Webhook configuration and testing
+
+## Documentation
+
+Complete product and API documentation:  
+<https://docs.google.com/document/d/1TKPrWTCeNwRhLXdnCiwPwbW6rC0E0rvYBDfRlYYKVuc/edit?usp=sharing>
+
+## Tech Stack
+
+- React 19, TypeScript, Vite
+- Tailwind CSS + shadcn/ui + Lucide icons
+- Axios with centralized typed client
+- Sonner for toasts, date-fns for time formatting
+- Custom hooks for products, tasks, uploads, and webhooks
+
+## Getting Started
+
+```bash
+npm install
+npm run dev
+```
+
+Set `VITE_API_BASE_URL` in `.env` to point at the backend API (defaults to `http://localhost:8000/api`).
+
+## Available Scripts
+
+- `npm run dev` — start development server
+- `npm run build` — production build
+- `npm run preview` — preview production build
+- `npm run lint` — run ESLint
+
 # React + Vite
 
 This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
