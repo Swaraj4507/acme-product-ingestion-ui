@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useProducts } from "@/hooks/useProducts";
 import { ProductTable } from "@/components/ProductTable";
 import { ProductFormModal } from "@/components/ProductFormModal";
@@ -30,7 +30,8 @@ import { toast } from "sonner";
 
 export const ProductsPage = () => {
   const [page, setPage] = useState(1);
-  const [search, setSearch] = useState("");
+  const [searchInput, setSearchInput] = useState(""); // Local input state
+  const [search, setSearch] = useState(""); // Debounced search state for API
   const [activeFilter, setActiveFilter] = useState<boolean | undefined>(undefined);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [isFormOpen, setIsFormOpen] = useState(false);
@@ -42,6 +43,16 @@ export const ProductsPage = () => {
   const [conflictingSku, setConflictingSku] = useState<string | null>(null);
   const [pendingProductData, setPendingProductData] = useState<Omit<Product, "id" | "createdAt" | "updatedAt"> | null>(null);
   const [isUpdateMode, setIsUpdateMode] = useState(false);
+
+  // Debounce search input - only update search state after user stops typing for 500ms
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setSearch(searchInput);
+      setPage(1); // Reset to first page when search changes
+    }, 500);
+
+    return () => clearTimeout(timer);
+  }, [searchInput]);
 
   const { data, loading, error, refetch } = useProducts({
     page,
@@ -226,10 +237,9 @@ export const ProductsPage = () => {
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
                   placeholder="Search by SKU, name, or description..."
-                  value={search}
-                  onChange={(e) => {
-                    setSearch(e.target.value);
-                    setPage(1);
+                  value={searchInput}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                    setSearchInput(e.target.value);
                   }}
                   className="pl-10"
                 />
