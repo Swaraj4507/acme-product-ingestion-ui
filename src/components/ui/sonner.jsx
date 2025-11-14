@@ -12,6 +12,9 @@ const Toaster = ({
       theme={theme}
       className="toaster group"
       toastOptions={{
+        style: {
+          minWidth: "360px",
+        },
         classNames: {
           toast:
             "group toast group-[.toaster]:bg-background group-[.toaster]:text-foreground group-[.toaster]:border-border group-[.toaster]:shadow-lg",

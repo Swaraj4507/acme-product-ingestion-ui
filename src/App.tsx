@@ -17,7 +17,7 @@ function App() {
           <Route path="/webhooks" element={<WebhooksPage />} />
         </Routes>
       </Layout>
-      <Toaster />
+      <Toaster position="top-center" />
     </BrowserRouter>
   );
 }
