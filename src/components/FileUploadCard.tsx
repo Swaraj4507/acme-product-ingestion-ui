@@ -49,7 +49,20 @@ export const FileUploadCard = () => {
       toast.success("File uploaded successfully. Processing...");
     } catch (error: any) {
       setIsUploading(false);
-      const errorMessage = error.response?.data?.message || "Upload failed";
+      const errorResponse = error.response?.data;
+      let errorMessage = errorResponse?.message || error.message || "Upload failed";
+
+      if (errorResponse?.detail) {
+        if (Array.isArray(errorResponse.detail)) {
+          errorMessage = errorResponse.detail
+            .map((item: any) => item?.msg || item)
+            .filter(Boolean)
+            .join(", ");
+        } else if (typeof errorResponse.detail === "string") {
+          errorMessage = errorResponse.detail;
+        }
+      }
+
       toast.error(errorMessage, {
         action: {
           label: "Retry",
